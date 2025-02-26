@@ -1,0 +1,9 @@
+data/*
+.idea/*
+model/*
+web/node_modules
+web/node_modules/*
+web/.vscode
+*/__pycache__
+**/__pycache__/*
+uploads/*
