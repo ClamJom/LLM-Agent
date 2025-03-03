@@ -6,10 +6,16 @@ import numpy as np
 
 from datasets import load_dataset
 
-from transformers import (pipeline, AutoTokenizer, AutoModelForCausalLM,
-                          DataCollatorForLanguageModeling,
-                          TrainingArguments, Trainer, TextDataset,
-                          TrainerCallback)
+from transformers import (
+    pipeline,
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    DataCollatorForLanguageModeling,
+    TrainingArguments,
+    Trainer,
+    TextDataset,
+    TrainerCallback,
+)
 
 
 def parse_config():
@@ -18,22 +24,34 @@ def parse_config():
     :return: 参数
     """
     parse = argparse.ArgumentParser(description="Text generation prompt.")
-    parse.add_argument("--model_name",
-                       type=str,
-                       required=False, default="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-                       help="模型名称或路径. 默认是 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B'")
-    parse.add_argument("--device",
-                       type=str,
-                       required=False, default="cpu",
-                       help="程序将会在哪个设备上运行（cpu/cuda）")
-    parse.add_argument("--dataset",
-                       type=str,
-                       required=False, default="",
-                       help="数据文本、数据集名称或文件名, 支持的文件类型: '.txt' '.csv'")
-    parse.add_argument("--using_load_dataset",
-                       type=bool,
-                       required=False, deufalt=False,
-                       help="是否使用`datasets`库加载参数`dataset`给定的数据集（如果存在），默认启用")
+    parse.add_argument(
+        "--model_name",
+        type=str,
+        required=False,
+        default="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+        help="模型名称或路径. 默认是 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B'",
+    )
+    parse.add_argument(
+        "--device",
+        type=str,
+        required=False,
+        default="cpu",
+        help="程序将会在哪个设备上运行（cpu/cuda）",
+    )
+    parse.add_argument(
+        "--dataset",
+        type=str,
+        required=False,
+        default="",
+        help="数据文本、数据集名称或文件名, 支持的文件类型: '.txt' '.csv'",
+    )
+    parse.add_argument(
+        "--using_load_dataset",
+        type=bool,
+        required=False,
+        deufalt=False,
+        help="是否使用`datasets`库加载参数`dataset`给定的数据集（如果存在），默认启用",
+    )
     return parse.parse_args()
 
 
@@ -51,26 +69,20 @@ def load_model_and_tokenizer(model_name_or_path, tokenizer_args=None, model_args
 
 def read_csv_as_dataset(file_path):
     dataset = []
-    with open(file_path, 'r', encoding="utf-8") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         csv_reader = csv.reader(f)
         for row in csv_reader:
-            data = {
-                "role": row[0],
-                "context": row[1]
-            }
+            data = {"role": row[0], "context": row[1]}
             dataset.append(data)
     return dataset
 
 
 def read_txt_as_dataset(file_path):
     dataset = []
-    with open(file_path, 'r', encoding="utf-8") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
         for line in lines:
-            data = {
-                "role": line.split(":")[0],
-                "context": line.split(":")[1]
-            }
+            data = {"role": line.split(":")[0], "context": line.split(":")[1]}
             dataset.append(data)
     return dataset
 
@@ -104,15 +116,9 @@ def main():
     device = "cpu"
     dataset_file = "./data/test.txt"
     tokenizer, model = load_model_and_tokenizer(model_path)
-    dataset = TextDataset(
-        tokenizer=tokenizer,
-        file_path=dataset_file,
-        block_size=64
-    )
+    dataset = TextDataset(tokenizer=tokenizer, file_path=dataset_file, block_size=64)
     data_collator = DataCollatorForLanguageModeling(
-        tokenizer=tokenizer,
-        mlm=False,
-        return_tensors="pt"
+        tokenizer=tokenizer, mlm=False, return_tensors="pt"
     )
     tokenizer.save_pretrained(output_path)
     # model.save_pretrained(output_path)
@@ -122,7 +128,7 @@ def main():
         overwrite_output_dir=True,
         num_train_epochs=3,
         use_cpu=True if device == "cpu" else False,
-        per_device_train_batch_size=1
+        per_device_train_batch_size=1,
     )
 
     trainer = Trainer(
@@ -131,7 +137,7 @@ def main():
         data_collator=data_collator,
         train_dataset=dataset,
         eval_dataset=dataset,
-        callbacks=[PrintTrainerCallback]
+        callbacks=[PrintTrainerCallback],
     )
 
     trainer.train()

@@ -31,3 +31,37 @@ cd web
 npm run dev
 ```
 端口默认为5173，也可自己修改
+
+## 自定义工具
+在`script/tools/tools.py`中，按照指定格式书写工具注释，`prompt`模块导入工具时会自动调用相应的解析函数生成工具列表与其相应的描述并嵌入System-Prompt中，
+具体的格式如下：
+
+```python
+def tool(**kwargs):
+    """
+    工具描述
+    --------------------
+    :param arg1: 参数1描述
+    :param arg2: 参数2描述
+    ...
+    :type arg1: 参数1类型
+    :type arg2: 参数2类型
+    ...
+    :enum arg1: 参数1可选值
+    :required: arg1, arg2
+    """
+    # 工具主要部分
+    return  # 返回值
+```
+
+其中，工具描述下的分割线<strong style="color: red">必不可少</strong>，这是因为这是用于区分工具描述与参数描述的重要部分。具体如何解析的参考`script/tools/__init__.py`中的`simple_tool_des`方法，方法很简单，是暴力解析的。
+
+## 问题
+
+1. 目前使用System-Prompt让模型结构化输出，但模型上下文有限，多轮对话过后可能不会结构化输出或忘记调用工具，后续需要改进。
+
+2. 搜索工具使用`urllib3`请求[bing](https://www.bing.com)，请求可能不成功。
+
+3. 较多的工具会导致较长的System-Prompt，可能考虑优化。
+
+4. RAG部分研究还在进行......

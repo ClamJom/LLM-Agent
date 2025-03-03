@@ -182,7 +182,9 @@ export default {
         title: this.title
       }).then(res => {
         this.currentConversationID = res.data;
-        this.saveConversation();
+        if(!this.generating){
+          this.saveConversation();
+        }
       });
     },
     saveConversation() {
@@ -314,13 +316,16 @@ export default {
           self.messages[self.messages.length - 1].content = thinking + self.parseMyJson(rsp);
           // self.messages[self.messages.length - 1].content = thinking + rsp;
           if (self.messages.length > 2) self.getTitle();
-          if (self.currentConversationID !== "") {
-            // 保存对话
-            self.updateConversationList();
-          }
           self.abortSignal = null;
         }
-      })
+      }).then(()=>{
+        if (self.currentConversationID !== "") {
+          // 保存对话
+          self.updateConversationList();
+        }else{
+          this.saveConversation();
+        }
+      });
     },
     parseMyJson(rsp) {
       // 解析回答，用于自定义结构体解析与工具调用

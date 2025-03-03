@@ -13,7 +13,6 @@ def get_all_tool_names():
     for name, obj in inspect.getmembers(current_module):
         if inspect.isfunction(obj) and obj.__module__ == current_module.__name__:
             all_names.append(name)
-        
 
     # 获取当前模块中定义的类的方法
     for cls_name, cls in inspect.getmembers(current_module, inspect.isclass):
@@ -22,10 +21,13 @@ def get_all_tool_names():
         # 遍历类的__dict__以获取类自身定义的方法
         for name, attr in cls.__dict__.items():
             # 包含实例方法、静态方法和类方法
-            if inspect.isfunction(attr) or isinstance(attr, (staticmethod, classmethod)):
+            if inspect.isfunction(attr) or isinstance(
+                attr, (staticmethod, classmethod)
+            ):
                 all_names.append(f"{cls_name}.{name}")
 
     return all_names
+
 
 def get_all_tools():
     current_module = sys.modules[tools.__name__]
@@ -34,8 +36,7 @@ def get_all_tools():
     # 获取当前模块中定义的顶层函数
     for name, obj in inspect.getmembers(current_module):
         if inspect.isfunction(obj) and obj.__module__ == current_module.__name__:
-            all_tools.append({"name": name, "obj":obj})
-        
+            all_tools.append({"name": name, "obj": obj})
 
     # 获取当前模块中定义的类的方法
     for cls_name, cls in inspect.getmembers(current_module, inspect.isclass):
@@ -44,9 +45,12 @@ def get_all_tools():
         # 遍历类的__dict__以获取类自身定义的方法
         for name, attr in cls.__dict__.items():
             # 包含实例方法、静态方法和类方法
-            if inspect.isfunction(attr) or isinstance(attr, (staticmethod, classmethod)):
+            if inspect.isfunction(attr) or isinstance(
+                attr, (staticmethod, classmethod)
+            ):
                 all_tools.append({"name": f"{cls_name}.{name}", "obj": attr})
     return all_tools
+
 
 def call_tool_by_name(tool_name, *args, **kwargs):
     all_tools = get_all_tools()
@@ -72,17 +76,19 @@ def get_tool_description():
         # 函数主体
     ```
     """
-    all_tools : List[function] = get_all_tools()
+    all_tools: List[function] = get_all_tools()
     tool_descriptions = []
     for tool in all_tools:
         # 获取函数的文档
         function_doc = tool["obj"].__doc__
         # 将文档分为功能描述和参数描述
-        function_des = function_doc.split("--------------------")[0] \
-            if function_doc else ""
+        function_des = (
+            function_doc.split("--------------------")[0] if function_doc else ""
+        )
         function_des = function_des.replace("\n", "").strip()
-        function_defination = function_doc.split("--------------------")[1] \
-            if function_doc else ""
+        function_defination = (
+            function_doc.split("--------------------")[1] if function_doc else ""
+        )
         # 解析参数描述
         parameters = {}
         required = []
@@ -102,15 +108,9 @@ def get_tool_description():
                 param_type = lines.split(":type ")[1].split(":")[1].strip()
                 if name in parameters:
                     des = parameters[name]
-                    parameters[name] = {
-                        "description": des,
-                        "type": param_type
-                    }
+                    parameters[name] = {"description": des, "type": param_type}
                 else:
-                    parameters[name] = {
-                        "description": "",
-                        "type": param_type
-                    }
+                    parameters[name] = {"description": "", "type": param_type}
             elif lines.startswith(":enum"):
                 name = lines.split(":enum")[1].split(":")[0].strip()
                 enum = lines.split(":enum")[1].split(":")[1].strip()
@@ -118,25 +118,20 @@ def get_tool_description():
                     parameters[name]["enum"] = enum
                 else:
                     des = parameters[name]
-                    parameters[name] = {
-                        "description": des,
-                        "enum": enum
-                    }
+                    parameters[name] = {"description": des, "enum": enum}
         current_tool_des = {
             "type": "function",
             "function": {
                 "name": tool["name"],
                 "description": function_des,
-                "parameters": {
-                    "type": "object",
-                    "properties": parameters
-                }
-            }
+                "parameters": {"type": "object", "properties": parameters},
+            },
         }
         if required:
             current_tool_des["function"]["parameters"]["required"] = required
         tool_descriptions.append(current_tool_des)
     return tool_descriptions
+
 
 def simple_tool_des():
     all_tools = get_all_tools()
@@ -145,11 +140,13 @@ def simple_tool_des():
         # 获取函数的文档
         function_doc = tool["obj"].__doc__
         # 将文档分为功能描述和参数描述
-        function_des = function_doc.split("--------------------")[0] \
-            if function_doc else ""
+        function_des = (
+            function_doc.split("--------------------")[0] if function_doc else ""
+        )
         function_des = function_des.replace("\n", "").strip()
-        function_defination = function_doc.split("--------------------")[1] \
-            if function_doc else ""
+        function_defination = (
+            function_doc.split("--------------------")[1] if function_doc else ""
+        )
         current_des = "工具名：{}\n工具描述：{}\n".format(tool["name"], function_des)
         param_dict = {}
         required = ""
@@ -192,6 +189,7 @@ def simple_tool_des():
         tool_des += current_des
     return tool_des
 
+
 def simple_tool_des_en():
     all_tools = get_all_tools()
     tool_des = ""
@@ -199,12 +197,16 @@ def simple_tool_des_en():
         # 获取函数的文档
         function_doc = tool["obj"].__doc__
         # 将文档分为功能描述和参数描述
-        function_des = function_doc.split("--------------------")[0] \
-            if function_doc else ""
+        function_des = (
+            function_doc.split("--------------------")[0] if function_doc else ""
+        )
         function_des = function_des.replace("\n", "").strip()
-        function_defination = function_doc.split("--------------------")[1] \
-            if function_doc else ""
-        current_des = "Tool name: {}\nTool description: {}\n".format(tool["name"], function_des)
+        function_defination = (
+            function_doc.split("--------------------")[1] if function_doc else ""
+        )
+        current_des = "Tool name: {}\nTool description: {}\n".format(
+            tool["name"], function_des
+        )
         param_dict = {}
         required = ""
         for lines in function_defination.split("\n"):

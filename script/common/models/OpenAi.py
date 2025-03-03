@@ -10,6 +10,7 @@ import tools
 
 urllib3.disable_warnings()
 
+
 class OpenAi(BaseModel):
     """
     OpenAI模型
@@ -23,7 +24,8 @@ class OpenAi(BaseModel):
     :param frequency_penalty: 频率惩罚，默认为0
     :param presence_penalty: 存在惩罚，默认为0
     """
-    def __init__(self, url: str, api_key:str, model:str, **kwargs):
+
+    def __init__(self, url: str, api_key: str, model: str, **kwargs):
         """
         OpenAI模型
         ----------------
@@ -56,19 +58,21 @@ class OpenAi(BaseModel):
         if self.tools != []:
             # 不要在调用工具时使用流式传输
             self.stream = False
-        self.stream_callback = kwargs.get("stream_callback",None)
+        self.stream_callback = kwargs.get("stream_callback", None)
 
         self.messages = []
 
-        self.__headers = {"Authorization": "Bearer {}".format(self.api_key),
-                          "mj-api-secret": "{}".format(self.api_key),
-                          "Content-Type": "application/json"}
+        self.__headers = {
+            "Authorization": "Bearer {}".format(self.api_key),
+            "mj-api-secret": "{}".format(self.api_key),
+            "Content-Type": "application/json",
+        }
 
-    def __parse(self, message:str):
+    def __parse(self, message: str):
         obj = json.loads(message)
         return obj["choices"][0]["message"]["content"]
-    
-    def __parse_stream(self, message:str):
+
+    def __parse_stream(self, message: str):
         if not message:
             return ""
         obj = json.loads(message)
@@ -92,29 +96,35 @@ class OpenAi(BaseModel):
             self.messages.append({"role": "system", "content": self.system_prompt})
         self.messages.append({"role": "user", "content": prompt})
 
-        parse_message = kwargs.get("parse_message",True)
+        parse_message = kwargs.get("parse_message", True)
         answer = self.__request_main(parse_message)
         self.messages.append({"role": "assistant", "content": answer})
         return answer
-    
-    def __request_main(self, parse_message: bool = True):
-        body = json.dumps({
-            "model": self.model,
-            "messages": self.messages,
-            "temperature": self.tempture,
-            "max_tokens": self.max_tokens,
-            "top_p": self.top_p,
-            "frequency_penalty": self.frequency_penalty,
-            "presence_penalty": self.presence_penalty,
-            "stream": self.stream,
-            "tools": None if self.tools == [] else self.tools
-        })
 
-        rsp = urllib3.request("POST", self.url + "/chat/completions", 
-                              headers=self.__headers, body=body, 
-                              timeout=300,
-                              preload_content=False if self.stream else True)
-        
+    def __request_main(self, parse_message: bool = True):
+        body = json.dumps(
+            {
+                "model": self.model,
+                "messages": self.messages,
+                "temperature": self.tempture,
+                "max_tokens": self.max_tokens,
+                "top_p": self.top_p,
+                "frequency_penalty": self.frequency_penalty,
+                "presence_penalty": self.presence_penalty,
+                "stream": self.stream,
+                "tools": None if self.tools == [] else self.tools,
+            }
+        )
+
+        rsp = urllib3.request(
+            "POST",
+            self.url + "/chat/completions",
+            headers=self.__headers,
+            body=body,
+            timeout=300,
+            preload_content=False if self.stream else True,
+        )
+
         if rsp.status != 200:
             return "Request Error:\n {}".format(rsp.reason)
 
@@ -148,46 +158,52 @@ class OpenAi(BaseModel):
             else:
                 rsp_message = rsp.data.decode("utf-8")
         return rsp_message
-    
+
     def call_stream(self, prompt, parse_message: bool = True):
         if self.messages == [] and self.system_prompt != "":
             self.messages.append({"role": "system", "content": self.system_prompt})
         self.messages.append({"role": "user", "content": prompt})
-        body = json.dumps({
-            "model": self.model,
-            "messages": self.messages,
-            "temperature": self.tempture,
-            "max_tokens": self.max_tokens,
-            "top_p": self.top_p,
-            "frequency_penalty": self.frequency_penalty,
-            "presence_penalty": self.presence_penalty,
-            "stream": self.stream,
-            "tools": None if self.tools == [] else self.tools
-        })
+        body = json.dumps(
+            {
+                "model": self.model,
+                "messages": self.messages,
+                "temperature": self.tempture,
+                "max_tokens": self.max_tokens,
+                "top_p": self.top_p,
+                "frequency_penalty": self.frequency_penalty,
+                "presence_penalty": self.presence_penalty,
+                "stream": self.stream,
+                "tools": None if self.tools == [] else self.tools,
+            }
+        )
 
-        rsp = urllib3.request("POST", self.url + "/chat/completions", 
-                              headers=self.__headers, body=body, 
-                              timeout=300,
-                              preload_content=False if self.stream else True)
-        
+        rsp = urllib3.request(
+            "POST",
+            self.url + "/chat/completions",
+            headers=self.__headers,
+            body=body,
+            timeout=300,
+            preload_content=False if self.stream else True,
+        )
+
         if rsp.status != 200:
             return "Request Error:\n {}".format(rsp.reason)
         return rsp.stream()
         # rsp_message = []
         # for line in rsp.stream():
-            # line = line.decode("utf-8").strip()
-            # if line.startswith("data:"):
-            #     line = line[5:]
-                # if line.find("[DONE]") != -1:
-                #     break
-                # if parse_message:
-                #     rsp_message.append(copy.deepcopy(self.__parse_stream(line)))
-                # else:
-                #     rsp_message.append(copy.deepcopy(line))
-            # yield "{}\n".format(line)
+        # line = line.decode("utf-8").strip()
+        # if line.startswith("data:"):
+        #     line = line[5:]
+        # if line.find("[DONE]") != -1:
+        #     break
+        # if parse_message:
+        #     rsp_message.append(copy.deepcopy(self.__parse_stream(line)))
+        # else:
+        #     rsp_message.append(copy.deepcopy(line))
+        # yield "{}\n".format(line)
         # "".join(rsp_message)
         # self.messages.append({"role":"assistant", "content": rsp_message})
-    
+
     def __is_tools_calling(self, message: object):
         """
         判断是否为工具调用
@@ -198,7 +214,7 @@ class OpenAi(BaseModel):
         if "tool_calls" not in message["choices"][0]["message"]:
             return False
         return True
-    
+
     def __get_tools_calling(self, message: object):
         """
         获取工具调用
@@ -215,14 +231,15 @@ class OpenAi(BaseModel):
             if type(tool_arg) == str:
                 tool_arg = json.loads(tool_arg)
             tool_id = tool["id"]
-            tool_results.append({
-                "role" : 'tool',
-                "content": tools.call_tool_by_name(tool_name, **tool_arg),
-                "tool_call_id": tool_id
-            })
+            tool_results.append(
+                {
+                    "role": "tool",
+                    "content": tools.call_tool_by_name(tool_name, **tool_arg),
+                    "tool_call_id": tool_id,
+                }
+            )
         return tool_results
 
-    
     def get_models(self):
         """
         获取模型列表

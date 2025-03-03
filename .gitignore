@@ -7,3 +7,6 @@ web/.vscode
 */__pycache__
 **/__pycache__/*
 uploads/*
+test/*
+embeddings.json
+search_tree.json
