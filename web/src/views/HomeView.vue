@@ -479,7 +479,7 @@ export default {
             </div>
             <div class="message_main" v-if="message.role === 'user' || message.role === 'assistant'">
               <div class="message_content">
-                <MdPreview v-if="message.content != ''" v-model="message.content"></MdPreview>
+                <MdPreview v-if="message.content != ''" v-model="message.content" :code-foldable="false"></MdPreview>
                 <div v-else>生成中......</div>
               </div>
               <div class="message_foot">
