@@ -3,7 +3,7 @@
 SQLITE_DATABASE_PATH = "./data/database.db"
 
 API_URL = "https://api.siliconflow.cn/v1"
-API_KEY = "xxx"
+API_KEY = "sk-ogidoubslyzerhzixwgogpsnaoivvpwinckhnbpxtapxztmk"
 
 # 默认聊天模型
 DEFAULT_MODEL = "Qwen/Qwen2.5-32B-Instruct"
@@ -56,4 +56,4 @@ RAG_CLUSTER_SIZE = 5
 RAG_CLSSIFICATION_ALG = "kmeans"
 
 # 生成树时是否生成描述（描述使用文本总结模型生成）
-RAG_INIT_TREE_WITH_DES = False
+RAG_INIT_TREE_WITH_DES = True

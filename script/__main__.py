@@ -126,6 +126,14 @@ if __name__ == "__main__":
     web()
     # import rag
 
+    # _rag = rag.RAGTree("tb1.txt")
+    # for rsp in _rag.init():
+    #     obj = json.loads(rsp)
+    #     idx, total = obj["idx"], obj["total"]
+    #     print(f"{idx} / {total}")
+    # result = _rag.search("汪淼")
+    # print(result.des)
+
     # _rag = rag.RAG("tb1.txt")
     # for rsp in _rag.init():
     #     obj = json.loads(rsp)
