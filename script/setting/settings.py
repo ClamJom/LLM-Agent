@@ -3,7 +3,7 @@
 SQLITE_DATABASE_PATH = "./data/database.db"
 
 API_URL = "https://api.siliconflow.cn/v1"
-API_KEY = "sk-tpotoeoqmziohjokjrnejqerehlqfpkapsuoiigoonjsomav"
+API_KEY = "xxx"
 
 # 默认聊天模型
 DEFAULT_MODEL = "Qwen/Qwen2.5-32B-Instruct"
