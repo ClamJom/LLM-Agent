@@ -33,6 +33,9 @@ RAG_N_CTX = 512
 # 模型GPU加载层数
 RAG_EMBEDDING_GPU_LAYER = 0
 
+# RAG重叠Token设置
+RAG_OVERLAPPING_TOKEN = 100
+
 # 分词器，这里使用`Deepseek R1 Distill 1.5B`的分词器，使用其它影响不大，
 # 只是为了确保上下文的大小不会超过Embedding模型的上下文
 RAG_TOKENIZER_PATH_OR_NAME = "./model/DeepSeek-R1-Distill-Qwen-1.5B"

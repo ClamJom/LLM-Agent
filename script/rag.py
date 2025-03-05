@@ -402,20 +402,40 @@ class RAG:
             'end_line' : 0,
             'des': ""
         }
-        for idx, line in enumerate(lines):
+        # for idx, line in enumerate(lines):
+        #     line_tokens = self.tokenizer.encode(line, add_special_tokens=False)
+        #     if current_chunk_token_num + len(line_tokens) > self.max_token:
+        #         current_chunk['end_line'] = idx
+        #         current_chunk_token_num = 0
+        #         chunks.append(current_chunk)
+        #         current_chunk = {
+        #             'start_line': idx,
+        #             'end_line' : idx,
+        #             'des': ""
+        #         }
+        #     else:
+        #         current_chunk['des'] += line + "\n"
+        #         current_chunk_token_num += len(line_tokens)
+        idx = 0
+        while idx < len(lines):
+            line = lines[idx]
             line_tokens = self.tokenizer.encode(line, add_special_tokens=False)
             if current_chunk_token_num + len(line_tokens) > self.max_token:
                 current_chunk['end_line'] = idx
-                current_chunk_token_num = 0
+                current_chunk_tokens = self.tokenizer.encode(current_chunk["des"], add_special_tokens=False)
+                current_chunk_tokens = current_chunk_tokens[-settings.RAG_OVERLAPPING_TOKEN:]
+                overlapping_parts = self.tokenizer.decode(current_chunk_tokens)
+                current_chunk_token_num = settings.RAG_OVERLAPPING_TOKEN + len(line_tokens)
                 chunks.append(current_chunk)
                 current_chunk = {
                     'start_line': idx,
                     'end_line' : idx,
-                    'des': ""
+                    'des': overlapping_parts + line
                 }
             else:
-                current_chunk['des'] += line + "\n"
+                current_chunk["des"] += line + "\n"
                 current_chunk_token_num += len(line_tokens)
+            idx += 1
         return chunks
     
     def delete_file_data(self, file_name: str):

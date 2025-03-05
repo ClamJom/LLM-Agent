@@ -123,19 +123,20 @@ def web():
 
 
 if __name__ == "__main__":
-    # web()
-    import rag
+    web()
+    # import rag
 
-    _rag = rag.RAG("tb1.txt")
-    for rsp in _rag.init():
-        obj = json.loads(rsp)
-        idx, total = obj["idx"], obj["total"]
-        print(f"{idx} / {total}")
+    # _rag = rag.RAG("tb1.txt")
+    # for rsp in _rag.init():
+    #     obj = json.loads(rsp)
+    #     idx, total = obj["idx"], obj["total"]
+    #     print(f"{idx} / {total}")
 
-    _rag = rag.RAG("tb3.txt")
-    for rsp in _rag.init():
-        obj = json.loads(rsp)
-        idx, total = obj["idx"], obj["total"]
-        print(f"{idx} / {total}")
-    result = _rag.search("程心的身世")
-    print(result)
+    # _rag = rag.RAG("tb3.txt")
+    # # _rag.file_name = "tb3.txt"
+    # for rsp in _rag.init():
+    #     obj = json.loads(rsp)
+    #     idx, total = obj["idx"], obj["total"]
+    #     print(f"{idx} / {total}")
+    # result = _rag.search("程心的身世")
+    # print(result)

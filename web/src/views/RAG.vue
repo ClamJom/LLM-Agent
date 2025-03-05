@@ -105,6 +105,7 @@ export default{
                 "settings": {...this.settings},
                 "message_list": [...this.messages]
             }
+            data.settings.temperature /= 100;
             this.messages.push({
                 "role": "user",
                 "content": prompt,
