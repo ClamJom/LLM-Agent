@@ -435,4 +435,4 @@ async def rag_chat(chatRequest: ChatRequest):
                 break
     else:
         model.system_prompt = rag_prompt
-    return StreamingResponse(model.call_stream(rag_prompt), media_type="text/event-stream")
+    return StreamingResponse(model.call_stream(_prompt), media_type="text/event-stream")
