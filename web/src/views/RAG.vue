@@ -100,7 +100,6 @@ export default{
                 const date = new Date();
                 const cpuUsed = data["cpu"]["used"];
                 const memUsed = data["memery"]["memRealUsed"];
-                console.log(memUsed / 1024);
                 const memTotal = data["memery"]["memTotal"];
                 this.status.cpuInfoList.push([date, cpuUsed]);
                 this.status.memInfoList.push([date, memUsed / 1024]);
@@ -144,7 +143,7 @@ export default{
                 };
                 this.systemInfoChart.setOption(option);
             });
-            this.getSystemInfo();
+            setTimeout(this.getSystemInfo, 1000);
         },
         async getSystemInfo(){
             axios.get("/api/system_info").then((rsp)=>{
@@ -195,11 +194,13 @@ export default{
                         name: "CPU使用率",
                         type: 'line',
                         smooth: true,
+                        yAxisIndex: 0,
                         data: this.status.cpuInfoList
                     },{
                         name: "内存使用",
                         type: 'line',
                         smooth: true,
+                        yAxisIndex: 1,
                         data: this.status.memInfoList
                     }],
                     grid:{
@@ -452,7 +453,7 @@ export default{
                 </div>
                 <TransitionGroup name="drawer">
                     <div class="file_item" v-for="(file, idx) of uploadingFiles" :key="idx">
-                        <div class="file_preview">
+                        <div class="file_preview ">
                             <div class="uploading_status">
                                 <div class="uploading_label">处理进度</div>
                                 <div class="uploading_progress" :class="{uploaded: parseInt(file.progress) >= 100, uploading: file.progress < 100}">{{ file.progress }}%</div>
