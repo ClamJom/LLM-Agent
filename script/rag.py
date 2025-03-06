@@ -344,7 +344,7 @@ class RAGTree:
             current_node.start_line = chunk["start_line"]
             current_node.end_line = chunk["end_line"]
             node_list.append(current_node)
-            yield json.dumps({"step": 0,"idx": idx, "total": len(chunks)})
+            yield json.dumps({"file_name": self.file_name, "step": 0,"idx": idx, "total": len(chunks)})
         
         # 保存
         if self.classification_alg == "cmeans":
@@ -353,7 +353,7 @@ class RAGTree:
             root = self.init_search_tree_kmeans(node_list)
         self.root = root
         self.rag_db.save_search_tree(root)
-        yield json.dumps({"step": 1,"idx": 0, "total": 0})
+        yield json.dumps({"file_name": self.file_name, "step": 1, "idx": 0, "total": 0})
     
     def search(self, query: str):
         if self.root is None:
@@ -457,7 +457,7 @@ class RAG:
                 metadatas=[{"file_name":self.file_name, "start_line": chunk["start_line"], "end_line": chunk["end_line"]}],
                 ids=[str(uuid.uuid4())]
             )
-            yield json.dumps({"idx": idx, "total": len(chunks)})
+            yield json.dumps({"file_name": self.file_name, "idx": idx, "total": len(chunks)}) + "\n"
     
     def search(self, query: str, top_k: int = 4):
         if self.collection is None:

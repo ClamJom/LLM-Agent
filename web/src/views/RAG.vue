@@ -4,6 +4,8 @@ import axios from 'axios';
 import { MdPreview, MdEditor } from 'md-editor-v3';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import 'md-editor-v3/lib/style.css'
+import * as echarts from 'echarts';
+import { ref } from "vue";
 
 export default{
     components:{
@@ -23,6 +25,7 @@ export default{
                 // 默认流式传输
                 stream: true
             },
+            systemInfoChart: null,
             // 各种状态
             status:{
                 drawer: true,
@@ -31,7 +34,11 @@ export default{
                 // 流式传输终止信号
                 abortSignal: null,
                 // 如果模型是推理型的，这里存储其推理状态
-                thinking: false
+                thinking: false,
+                // 系统信息列表
+                dateList: [],
+                cpuInfoList: [],
+                memInfoList: [],
             },
             // 模型列表
             modelList: ["Qwen/Qwen2.5-32B-Instruct"],
@@ -39,15 +46,12 @@ export default{
             message: "",
             // 消息列表
             messages: [],
-            // 当前文件处理进度，储存文件向量化进度
-            currentFileHandleProgress:{
-                fileName: "",
-                progress: 0
-            },
-            fileList: [{
-                fileName: "test_file.txt",
-                fileType: "file/text"
-            }]
+            // 支持的文件类型
+            supportedFileTypes: "",
+            // 正在上传处理的文件列表
+            uploadingFiles:[],
+            fileList: [],
+            currentRelatives:[],
         }
     },
     methods:{
@@ -58,8 +62,14 @@ export default{
                 this.modelList = rsp.data;
             });
         },
+        async getSupportedFileTypes(){
+            // 获取支持的文件类型
+            axios.get("/api/rag/supported_file_types").then(rsp=>{
+                this.supportedFileTypes = rsp.data;
+            });
+        },
         getFileType(){
-            // 通过文件判断文件类型，当前只支持文本，因此返回文本类型
+            // 通过文件判断文件类型，当前只支持文本，因此返回文本类型，这里应该加上文件参数
             return "file/text"
         },
         async getFileList(){
@@ -84,11 +94,137 @@ export default{
                 this.settings.top_k = settings["top_k"];
             });
         },
+        async initSystemInfo(){
+            axios.get("/api/system_info").then((rsp)=>{
+                const data = rsp.data;
+                const date = new Date();
+                const cpuUsed = data["cpu"]["used"];
+                const memUsed = data["memery"]["memRealUsed"];
+                console.log(memUsed / 1024);
+                const memTotal = data["memery"]["memTotal"];
+                this.status.cpuInfoList.push([date, cpuUsed]);
+                this.status.memInfoList.push([date, memUsed / 1024]);
+                let option = {
+                    title: {
+                        text: "系统资源监控"
+                    },
+                    legend: {                         // 图例设置
+                        data: ['CPU使用率', '内存使用'],
+                        bottom: 10                      // 图例位于底部
+                    },
+                    xAxis: {
+                        type: 'time',
+                        boundaryGap: false,
+                        axisLabel:{
+                            formatter: "{hh}:{mm}:{ss}",
+                            hideOverlap: true
+                        }
+                    },
+                    yAxis:[{
+                        boundaryGap: false,
+                        type: 'value'
+                    },{
+                        boundaryGap: false,
+                        type: 'value',
+                        max: memTotal / 1024
+                    }],
+                    series:[{
+                        name: "CPU使用率",
+                        type: 'line',
+                        smooth: true,
+                        yAxisIndex: 0,
+                        data: this.status.cpuInfoList
+                    },{
+                        name: "内存使用",
+                        type: 'line',
+                        smooth: true,
+                        yAxisIndex: 1,
+                        data: this.status.memInfoList
+                    }]
+                };
+                this.systemInfoChart.setOption(option);
+            });
+            this.getSystemInfo();
+        },
+        async getSystemInfo(){
+            axios.get("/api/system_info").then((rsp)=>{
+                const data = rsp.data;
+                const date = new Date();
+                const cpuUsed = data["cpu"]["used"];
+                const memUsed = data["memery"]["memRealUsed"];
+                const memTotal = data["memery"]["memTotal"];
+                this.status.dateList.push(date);
+                this.status.cpuInfoList.push([date, cpuUsed]);
+                this.status.memInfoList.push([date, memUsed / 1024]);
+                if(this.status.dateList.length > 10){
+                    this.status.dateList.shift();
+                    this.status.cpuInfoList.shift();
+                    this.status.memInfoList.shift();
+                }
+                let option = {
+                    title: {
+                        text: "系统资源监控"
+                    },
+                    legend: {                         // 图例设置
+                        data: ['CPU使用率', '内存使用'],
+                        bottom: 10                      // 图例位于底部
+                    },
+                    animation: false,
+                    xAxis: {
+                        type: 'time',
+                        boundaryGap: false,
+                        axisLabel:{
+                            formatter: "{hh}:{mm}:{ss}",
+                            hideOverlap: true,
+                            rotate: 45
+                        }
+                    },
+                    yAxis:[{
+                        type: 'value',
+                        max: 100,
+                        min: 0,
+                        name: "CPU使用率",
+                        tooltip: true,
+                    },{
+                        type: 'value',
+                        max: memTotal / 1024,
+                        min: 0,
+                        name: "内存使用"
+                    }],
+                    series:[{
+                        name: "CPU使用率",
+                        type: 'line',
+                        smooth: true,
+                        data: this.status.cpuInfoList
+                    },{
+                        name: "内存使用",
+                        type: 'line',
+                        smooth: true,
+                        data: this.status.memInfoList
+                    }],
+                    grid:{
+                        left: "40px",
+                        right: "40px"
+                    }
+                };
+                this.systemInfoChart.setOption(option);
+            });
+            setTimeout(this.getSystemInfo, 2000);
+        },
+        initSystemInfoCharts(){
+            let aim = this.$refs["system_info"];
+            this.systemInfoChart = echarts.init(aim);
+            this.initSystemInfo();
+        },
         async initData(){
             // 初始化数据入口，在created中调用
             this.getModels();
+            this.getSupportedFileTypes();
             this.getFileList();
             this.getDefaultSettings();
+        },
+        async getDataAfterMounted(){
+            this.initSystemInfoCharts();
         },
         async getRelative(query, top_k = 4){
             return axios.get(`/api/rag/relatives?query=${query}&top_k=${top_k}`);
@@ -101,25 +237,29 @@ export default{
             const data = {
                 "prompt": prompt,
                 "model": this.model,
-                "attachments": [],
+                "attachments": [],      // 暂时不支持附件
                 "settings": {...this.settings},
                 "message_list": [...this.messages]
             }
             data.settings.temperature /= 100;
+            // 将用户的消息添加到消息列表中
             this.messages.push({
                 "role": "user",
                 "content": prompt,
                 "timestamp": new Date().toLocaleDateString()
             });
+            // 将模型的回复先添加至消息列表，当接收到消息时往内容中流式填充Token
             this.messages.push({
                 "role": "assistant",
                 "content": "",
                 "timestamp": new Date().toLocaleDateString(),
                 "contextSearchResult": []
             });
+            // 获取相关文件
             this.getRelative(prompt, this.settings.top_k).then(rsp=>{
+                this.currentRelatives = [];
                 rsp.data.forEach((r)=>{
-                    this.messages[this.messages.length - 1].contextSearchResult.push({
+                    this.currentRelatives.push({
                         "fileName": r["file_name"],
                         "url": "",
                         "contextChunk": {
@@ -139,8 +279,36 @@ export default{
             const data = this.formatChatRequestMessage();
             this.SSEFetchCore("/api/rag/chat", data);
         },
+        uploadRAGFile(){
+            const uploadEle = this.$refs["upload_file"];
+            const file = uploadEle.files[0];
+            if(file === undefined) return;
+            const file_name = file.name;
+            const type = file.type;
+            const data = new FormData();
+            this.uploadingFiles.push({
+                fileName: file_name,
+                fileType: type,
+                progress: 0
+            });
+            data.append("upload_file", file);
+            const url = "/api/rag/upload_file";
+            const self = this;
+            fetchEventSource(url, {
+                method: "POST",
+                openWhenHidden: true,
+                body: data,
+                onmessage: self.handleUploadOnMessage,
+                onclose: ()=>{self.handleUploadOnClose(file_name);},
+                onerror: self.handleUploadOnError
+            }).then(()=>{
+                self.handleUploadEnd(file_name);
+            })
+        },
         SSEFetchCore(url, data){
             /**
+             * 流式消息传输核心，只负责发起请求，处理在下方的函数中
+             * @param url: 请求地址
              * @param data: 数据。数据处理不会在此处，必须在传输前处理成需要的格式
              */
             const self = this;
@@ -154,9 +322,36 @@ export default{
                 onmessage: self.handleSSEFetchOnMessage,
                 onclose: self.handleSSEFetchOnClose,
                 onerror: self.handleSSEFetchOnError
-            }).then(()=>self.handleSSEEnd)
+            }).then(self.handleSSEEnd)
         },
         // 此处往下是事件处理
+        handleUploadOnMessage(msg){
+            // 上传文件回调，这里后端会流式传输文件处理进度
+            if(msg.data === undefined || !msg.data) return;
+            const progress = JSON.parse(msg.data);
+            const idx = progress["idx"];
+            const total = progress["total"];
+            const file_name = progress["file_name"]
+            this.uploadingFiles.forEach((f)=>{
+                if(f.fileName === file_name){
+                    f.progress = ((idx + 1) / total * 100).toFixed(2);
+                }
+            });
+        },
+        handleUploadOnError(e){
+            console.log(e);
+        },
+        handleUploadOnClose(file_name){
+            this.uploadingFiles = this.uploadingFiles.filter((f)=>{
+                return f.fileName !== file_name;
+            });
+        },
+        handleUploadEnd(file_name){
+            this.uploadingFiles = this.uploadingFiles.filter((f)=>{
+                return f.fileName !== file_name;
+            });
+            this.getFileList();
+        },
         handleSSEFetchOnMessage(msg){
             // 流式传输消息处理
             // 终止条件
@@ -206,6 +401,7 @@ export default{
                 this.status.abortSignal.abort();
                 this.status.abortSignal = null;
             }
+            this.messages[this.messages.length - 1].contextSearchResult = [...this.currentRelatives];
         },
         handleInputKeyDown(e){
             // 回车发送消息处理
@@ -214,6 +410,11 @@ export default{
                 // 发送消息
                 this.sendMessage();
             }
+        },
+        handleDeleteFile(file_name){
+            axios.delete("/api/rag/delete_file/"+file_name).then((rsp)=>{
+                this.getFileList();
+            });
         },
         handleTestButton(){
             // 测试按钮，用作开发中的各项测试
@@ -224,6 +425,9 @@ export default{
     },
     created(){
         this.initData();
+    },
+    mounted(){
+        this.getDataAfterMounted();
     }
 }
 </script>
@@ -235,20 +439,37 @@ export default{
         <div class="left_bar_header">
             <div class="file_list_header">文件</div>
             <div class="file_list">
-                <div class="file_item" v-for="(file, idx) of fileList" :key="idx">
-                    <div class="file_preview">
-                        <img :src="'/api/download_file/' + file.fileName"
-                         :alt="file.fileName"
-                         v-if="file.fileType.indexOf('image') != -1">
-                    </div>
-                    <div class="file_name">{{file.fileName}}</div>
-                </div>
                 <div class="file_item">
-                    <div class="file_preview">
-                        <!-- 上传图标 -->
-                    </div>
-                    <div class="file_name">上传文件</div>
+                    <label for="upload_file" style="cursor: pointer;">
+                        <div class="file_preview">
+                            <!-- 上传图标 -->
+                        </div>
+                        <div class="file_name">
+                            上传文件    
+                        </div>
+                    </label>
+                    <input type="file" @change="uploadRAGFile" style="display: none;" :accept="supportedFileTypes" id="upload_file" name="upload_file" ref="upload_file" />
                 </div>
+                <TransitionGroup name="drawer">
+                    <div class="file_item" v-for="(file, idx) of uploadingFiles" :key="idx">
+                        <div class="file_preview">
+                            <div class="uploading_status">
+                                <div class="uploading_label">处理进度</div>
+                                <div class="uploading_progress" :class="{uploaded: parseInt(file.progress) >= 100, uploading: file.progress < 100}">{{ file.progress }}%</div>
+                            </div>
+                        </div>
+                        <div class="file_name">{{file.fileName}}</div>
+                    </div>
+                    <div class="file_item" v-for="(file, idx) of fileList" :key="idx">
+                        <div class="delete_rag_file" @click="handleDeleteFile(file.fileName)">删除</div>
+                        <div class="file_preview">
+                            <img :src="'/api/download_file/' + file.fileName"
+                            :alt="file.fileName"
+                            v-if="file.fileType.indexOf('image') != -1">
+                        </div>
+                        <div class="file_name">{{file.fileName}}</div>
+                    </div>
+                </TransitionGroup>
             </div>
         </div>
         <div class="left_bar_body">
@@ -300,6 +521,11 @@ export default{
                 </div>
             </div>
         </div>
+        <div class="left_bar_foot">
+            <div class="system_info" ref="system_info">
+                <!-- 使用ECharts折线图，在一副图中绘制CPU与内存使用率曲线 -->
+            </div>
+        </div>
     </div>
     </Transition>
     <div class="main">
@@ -311,10 +537,11 @@ export default{
                 <div class="message" v-for="(message, idx) of messages" :key="idx" :class="message.role">
                     <div class="message_header">{{ message.timestamp }}</div>
                     <div class="message_body">
-                        <MdPreview v-model="message.content"></MdPreview>
+                        <MdPreview v-model="message.content" :code-foldable="false" v-if="message.content !== ''"></MdPreview>
+                        <div v-else>生成中.....</div>
                         <div class="message_foot">
                             <!-- 参考搜索的上下文结果 -->
-                            <div class="relative_list" v-if="message.role === 'assistant' && message.contextSearchResult">
+                            <div class="relative_list" v-if="message.role === 'assistant' && message.contextSearchResult.length !== 0">
                                 <div class="relative_title">参考文件</div>
                                 <div class="relative_item" v-for="(relative, idx) of message.contextSearchResult" :key="idx">
                                     <div class="related_file_name">{{ relative.fileName }}</div>

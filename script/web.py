@@ -7,11 +7,13 @@ from setting import prompt
 from datetime import datetime
 from pathlib import Path
 from common.models import OpenAi, Audio
+from common import systemInfo
 from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, Body
 from setting.settings import *
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from sse_starlette import EventSourceResponse
 
 app = FastAPI()
 
@@ -146,6 +148,13 @@ def UUID():
 def index():
     return "Hello, World"
 
+
+@app.get("/system_info")
+def get_system_info():
+    system_info = {}
+    system_info["cpu"] = systemInfo.GetCpuInfo()
+    system_info["memery"] = systemInfo.GetMemInfo()
+    return system_info
 
 @app.get("/models")
 def get_models():
@@ -292,6 +301,9 @@ async def download_file(file_name: str):
         headers={"Content-Disposition": "attachment; filename={}".format(file_name)},
     )
 
+@app.get("/rag/supported_file_types")
+async def get_supported_file_types():
+    return ".txt"
 
 @app.get("/rag/file_list")
 def get_rag_files():
@@ -319,7 +331,24 @@ async def upload_rag_file(upload_file: UploadFile):
         f.write(content)
     
     # 流式返回文件处理进度
-    return StreamingResponse(rag.init(), media_type="text/event-stream")
+    return EventSourceResponse(rag.init())
+
+@app.get("/rag/test")
+async def rag_test():
+    import time
+    def foo():
+        for i in range(100):
+            yield json.dumps({"step": i}) + "\n"
+            time.sleep(0.5)
+    return EventSourceResponse(foo())
+
+@app.delete("/rag/delete_file/{file_name}")
+async def rag_delete_file(file_name: str):
+    rag = RAG("")
+    rag.delete_file_data(file_name)
+    if os.path.exists(os.path.join(RAG_UPLOAD_PATH, file_name)):
+        os.remove(os.path.join(RAG_UPLOAD_PATH, file_name))
+    return "OK"
 
 @app.get("/rag/default_settings")
 async def rag_get_settings():

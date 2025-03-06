@@ -25,7 +25,7 @@ UPLOAD_PATH = "./uploads"
 RAG_SQLITE_DATABASE_PATH = "./data/rag.db"
 
 # 使用本地 embedding 模型
-RAG_EMBEDDING_MODEL = "./model/granite-embedding-278m-multilingual-Q4_K_M.gguf"
+RAG_EMBEDDING_MODEL = "./model/granite-embedding-278m-multilingual-GGUF/granite-embedding-278m-multilingual-Q4_K_M.gguf"
 
 # 模型上下文大小，具体可以查阅使用的Embedding模型的上下文
 RAG_N_CTX = 512

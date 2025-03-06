@@ -554,6 +554,18 @@ export default {
   </div>
 </template>
 
+<style>
+.thinking {
+    position: relative;
+    color: rgb(74, 74, 117);
+    font-size: small;
+  }
+
+.thinking:before {
+  content: "思考过程："
+}
+</style>
+
 <style scoped>
 @media screen and (max-width: 768px) {
   .main_container {
@@ -802,16 +814,6 @@ export default {
     border-bottom: 10px solid transparent;
     top: 10px;
     left: -10px;
-  }
-
-  .thinking {
-    position: relative;
-    color: rgb(74, 74, 117);
-    font-size: small;
-  }
-
-  .thinking:before {
-    content: "思考过程："
   }
 
   .message_foot {
