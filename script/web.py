@@ -2,6 +2,7 @@ import os
 import json
 import tools
 import do
+import asyncio
 from rag import RAG
 from setting import prompt
 from datetime import datetime
@@ -11,6 +12,7 @@ from common import systemInfo
 from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, Body
 from setting.settings import *
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sse_starlette import EventSourceResponse
@@ -303,7 +305,7 @@ async def download_file(file_name: str):
 
 @app.get("/rag/supported_file_types")
 async def get_supported_file_types():
-    return ".txt"
+    return ".txt,.md"
 
 @app.get("/rag/file_list")
 def get_rag_files():
@@ -359,8 +361,9 @@ async def rag_get_settings():
         "model": DEFAULT_MODEL
     }
 
-@app.get("/rag/relatives")
-async def get_relatives(query: str, top_k: int = 4):
+@app.post("/rag/relatives")
+async def get_relatives(query: str = Body(..., title="query", embed=True, description="查询"), 
+                        top_k: int = Body(4, title="top_k", embed=True, description="top_k")):
     rag = RAG("")
     rag_result = rag.search(query, top_k)
     search_list = []
@@ -370,8 +373,8 @@ async def get_relatives(query: str, top_k: int = 4):
         start_line = rag_result["metadatas"][0][idx]["start_line"]
         end_line = rag_result["metadatas"][0][idx]["end_line"]
         dis = rag_result["distances"][0][idx]
-        if dis > 0.3:
-            continue
+        # if dis > 0.3:
+        #     continue
         unique = "{}{}{}".format(file_name, start_line, end_line)
         if unique in cmap:
             continue
@@ -416,8 +419,8 @@ async def rag_chat(chatRequest: ChatRequest):
         start_line = rag_result["metadatas"][0][idx]["start_line"]
         end_line = rag_result["metadatas"][0][idx]["end_line"]
         dis = rag_result["distances"][0][idx]
-        if dis > 0.26:
-            continue
+        # if dis > 0.26:
+        #     continue
         unique = "{}{}{}".format(file_name, start_line, end_line)
         if unique in cmap:
             continue

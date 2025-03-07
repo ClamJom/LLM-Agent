@@ -94,128 +94,95 @@ export default{
                 this.settings.top_k = settings["top_k"];
             });
         },
-        async initSystemInfo(){
-            axios.get("/api/system_info").then((rsp)=>{
-                const data = rsp.data;
-                const date = new Date();
-                const cpuUsed = data["cpu"]["used"];
-                const memUsed = data["memery"]["memRealUsed"];
-                const memTotal = data["memery"]["memTotal"];
-                this.status.cpuInfoList.push([date, cpuUsed]);
-                this.status.memInfoList.push([date, memUsed / 1024]);
-                let option = {
-                    title: {
-                        text: "系统资源监控"
-                    },
-                    legend: {                         // 图例设置
-                        data: ['CPU使用率', '内存使用'],
-                        bottom: 10                      // 图例位于底部
-                    },
-                    xAxis: {
-                        type: 'time',
-                        boundaryGap: false,
-                        axisLabel:{
-                            formatter: "{hh}:{mm}:{ss}",
-                            hideOverlap: true
-                        }
-                    },
-                    yAxis:[{
-                        boundaryGap: false,
-                        type: 'value'
-                    },{
-                        boundaryGap: false,
-                        type: 'value',
-                        max: memTotal / 1024
-                    }],
-                    series:[{
-                        name: "CPU使用率",
-                        type: 'line',
-                        smooth: true,
-                        yAxisIndex: 0,
-                        data: this.status.cpuInfoList
-                    },{
-                        name: "内存使用",
-                        type: 'line',
-                        smooth: true,
-                        yAxisIndex: 1,
-                        data: this.status.memInfoList
-                    }]
-                };
-                this.systemInfoChart.setOption(option);
-            });
-            setTimeout(this.getSystemInfo, 1000);
-        },
         async getSystemInfo(){
-            axios.get("/api/system_info").then((rsp)=>{
+            const self = this;
+            axios.get("/api/system_info").then(rsp=>{
                 const data = rsp.data;
                 const date = new Date();
                 const cpuUsed = data["cpu"]["used"];
                 const memUsed = data["memery"]["memRealUsed"];
                 const memTotal = data["memery"]["memTotal"];
-                this.status.dateList.push(date);
-                this.status.cpuInfoList.push([date, cpuUsed]);
-                this.status.memInfoList.push([date, memUsed / 1024]);
-                if(this.status.dateList.length > 10){
-                    this.status.dateList.shift();
-                    this.status.cpuInfoList.shift();
-                    this.status.memInfoList.shift();
+                self.status.dateList.push(date);
+                self.status.cpuInfoList.push([date, cpuUsed]);
+                self.status.memInfoList.push([date, memUsed / 1024]);
+                if(self.status.dateList.length > 10){
+                    self.status.dateList.shift();
+                    self.status.cpuInfoList.shift();
+                    self.status.memInfoList.shift();
                 }
                 let option = {
-                    title: {
-                        text: "系统资源监控"
-                    },
-                    legend: {                         // 图例设置
-                        data: ['CPU使用率', '内存使用'],
-                        bottom: 10                      // 图例位于底部
-                    },
-                    animation: false,
-                    xAxis: {
-                        type: 'time',
-                        boundaryGap: false,
-                        axisLabel:{
-                            formatter: "{hh}:{mm}:{ss}",
-                            hideOverlap: true,
-                            rotate: 45
-                        }
-                    },
                     yAxis:[{
                         type: 'value',
-                        max: 100,
-                        min: 0,
-                        name: "CPU使用率",
-                        tooltip: true,
-                    },{
-                        type: 'value',
                         max: memTotal / 1024,
-                        min: 0,
                         name: "内存使用"
                     }],
                     series:[{
                         name: "CPU使用率",
-                        type: 'line',
-                        smooth: true,
                         yAxisIndex: 0,
-                        data: this.status.cpuInfoList
+                        data: self.status.cpuInfoList
                     },{
                         name: "内存使用",
-                        type: 'line',
-                        smooth: true,
                         yAxisIndex: 1,
-                        data: this.status.memInfoList
-                    }],
-                    grid:{
-                        left: "40px",
-                        right: "40px"
-                    }
+                        data: self.status.memInfoList
+                    }]
                 };
-                this.systemInfoChart.setOption(option);
+                self.systemInfoChart.setOption(option);
+                setTimeout(this.getSystemInfo, 1000);
             });
-            setTimeout(this.getSystemInfo, 2000);
         },
         initSystemInfoCharts(){
             let aim = this.$refs["system_info"];
             this.systemInfoChart = echarts.init(aim);
-            this.initSystemInfo();
+            let option = {
+                title: {
+                    text: "系统资源监控"
+                },
+                legend: {                         // 图例设置
+                    data: ['CPU使用率', '内存使用'],
+                    bottom: 10                      // 图例位于底部
+                },
+                animation: false,
+                xAxis: {
+                    type: 'time',
+                    boundaryGap: false,
+                    axisLabel:{
+                        formatter: "{hh}:{mm}:{ss}",
+                        hideOverlap: true,
+                        rotate: 45
+                    }
+                },
+                yAxis:[{
+                    type: 'value',
+                    max: 100,
+                    min: 0,
+                    name: "CPU使用率",
+                    tooltip: true,
+                },{
+                    type: 'value',
+                    max: 8,
+                    min: 0,
+                    name: "内存使用"
+                }],
+                series:[{
+                    name: "CPU使用率",
+                    type: 'line',
+                    smooth: true,
+                    yAxisIndex: 0,
+                    data: this.status.cpuInfoList
+                },{
+                    name: "内存使用",
+                    type: 'line',
+                    smooth: true,
+                    yAxisIndex: 1,
+                    data: this.status.memInfoList
+                }],
+                grid:{
+                    left: "40px",
+                    right: "40px"
+                }
+            };
+            this.systemInfoChart.setOption(option);
+            setTimeout(this.getSystemInfo, 1000);
         },
         async initData(){
             // 初始化数据入口，在created中调用
@@ -228,7 +195,11 @@ export default{
             this.initSystemInfoCharts();
         },
         async getRelative(query, top_k = 4){
-            return axios.get(`/api/rag/relatives?query=${query}&top_k=${top_k}`);
+            const data = {
+                "query": query,
+                "top_k": parseInt(top_k.toFixed(0))
+            };
+            return axios.post("/api/rag/relatives", data);
         },
         // 此处往下是逻辑处理
         formatChatRequestMessage(){
@@ -243,6 +214,7 @@ export default{
                 "message_list": [...this.messages]
             }
             data.settings.temperature /= 100;
+            data.settings.top_k = parseInt(data.settings.top_k);
             // 将用户的消息添加到消息列表中
             this.messages.push({
                 "role": "user",
@@ -377,6 +349,7 @@ export default{
                 }
                 this.messages[this.messages.length - 1].content += token;
             }
+            this.handleToMessageBottom();
         },
         handleSSEFetchOnError(e){
             // 流式传输错误处理
@@ -404,6 +377,13 @@ export default{
             }
             this.messages[this.messages.length - 1].contextSearchResult = [...this.currentRelatives];
         },
+        handleToMessageBottom(){
+            const chatContainer = this.$refs["chat_container"];
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: "smooth"
+            });
+        },
         handleInputKeyDown(e){
             // 回车发送消息处理
             if(!e.shiftKey && e.keyCode === 13){
@@ -419,9 +399,10 @@ export default{
         },
         handleTestButton(){
             // 测试按钮，用作开发中的各项测试
-            this.getRelative(this.message, this.settings.top_k).then(rsp=>{
-                console.log(rsp);
-            });
+            // this.getRelative(this.message, this.settings.top_k).then(rsp=>{
+            //     console.log(rsp);
+            // });
+            console.log(this.fileList);
         }
     },
     created(){
@@ -451,26 +432,24 @@ export default{
                     </label>
                     <input type="file" @change="uploadRAGFile" style="display: none;" :accept="supportedFileTypes" id="upload_file" name="upload_file" ref="upload_file" />
                 </div>
-                <TransitionGroup name="drawer">
-                    <div class="file_item" v-for="(file, idx) of uploadingFiles" :key="idx">
-                        <div class="file_preview ">
-                            <div class="uploading_status">
-                                <div class="uploading_label">处理进度</div>
-                                <div class="uploading_progress" :class="{uploaded: parseInt(file.progress) >= 100, uploading: file.progress < 100}">{{ file.progress }}%</div>
-                            </div>
+                <div class="file_item" v-for="(file, idx) of uploadingFiles" :key="idx">
+                    <div class="file_preview ">
+                        <div class="uploading_status">
+                            <div class="uploading_label">处理进度</div>
+                            <div class="uploading_progress" :class="{uploaded: parseInt(file.progress) >= 100, uploading: file.progress < 100}">{{ file.progress }}%</div>
                         </div>
-                        <div class="file_name">{{file.fileName}}</div>
                     </div>
-                    <div class="file_item" v-for="(file, idx) of fileList" :key="idx">
-                        <div class="delete_rag_file" @click="handleDeleteFile(file.fileName)">删除</div>
-                        <div class="file_preview">
-                            <img :src="'/api/download_file/' + file.fileName"
-                            :alt="file.fileName"
-                            v-if="file.fileType.indexOf('image') != -1">
-                        </div>
-                        <div class="file_name">{{file.fileName}}</div>
+                    <div class="file_name uploading">{{file.fileName}}</div>
+                </div>
+                <div class="file_item" v-for="(file, idx) of fileList" :key="idx">
+                    <div class="delete_rag_file" @click="handleDeleteFile(file.fileName)">删除</div>
+                    <div class="file_preview">
+                        <img :src="'/api/download_file/' + file.fileName"
+                        :alt="file.fileName"
+                        v-if="file.fileType.indexOf('image') != -1">
                     </div>
-                </TransitionGroup>
+                    <div class="file_name uploaded">{{file.fileName}}</div>
+                </div>
             </div>
         </div>
         <div class="left_bar_body">
@@ -530,7 +509,7 @@ export default{
     </div>
     </Transition>
     <div class="main">
-        <div class="chat_container">
+        <div class="chat_container" ref="chat_container">
             <div class="chat_title">
                 <h3>RAG测试</h3>
             </div>
